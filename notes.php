@@ -67,7 +67,7 @@ $current_page = 'notes';
                         <p class="mt-1 text-sm text-gray-500">Crea la tua prima nota per iniziare.</p>
                     </div>
                 <?php else: foreach ($notes as $note): ?>
-                <div class="block bg-gray-800 hover:bg-gray-700 p-6 rounded-2xl transition-colors cursor-pointer" onclick='openNoteModal(<?php echo json_encode($note); ?>)' data-note-id="<?php echo $note['id']; ?>">
+                <div class="relative block bg-gray-800 hover:bg-gray-700 p-6 rounded-2xl transition-colors cursor-pointer" onclick='openNoteModal(<?php echo json_encode($note); ?>)' data-note-id="<?php echo $note['id']; ?>">
                     <div class="flex justify-between items-start">
                         <h3 class="text-xl font-bold text-white truncate mb-2 note-title"><?php echo htmlspecialchars($note['title']); ?></h3>
                         <div class="tag-container">
@@ -82,7 +82,14 @@ $current_page = 'notes';
                     <p class="text-gray-400 text-sm h-12 overflow-hidden note-content-preview">
                         <?php echo htmlspecialchars(substr($note['content'], 0, 100)) . (strlen($note['content']) > 100 ? '...' : ''); ?>
                     </p>
-                    <p class="text-xs text-gray-500 mt-4 note-date">Modificato: <?php echo date("d/m/Y", strtotime($note['updated_at'])); ?></p>
+                    <div class="flex justify-between items-center mt-4">
+                        <p class="text-xs text-gray-500 note-date">Modificato: <?php echo date("d/m/Y", strtotime($note['updated_at'])); ?></p>
+                        <?php if (!empty($note['transaction_id'])): ?>
+                            <a href="transactions.php?description=<?php echo urlencode($note['transaction_description']); ?>" class="text-xs bg-blue-600 text-white font-semibold px-2 py-1 rounded-full hover:bg-blue-700 transition-colors" title="Collegato alla transazione: <?php echo htmlspecialchars($note['transaction_description']); ?>">
+                                Collegato
+                            </a>
+                        <?php endif; ?>
+                    </div>
                 </div>
                 <?php endforeach; endif; ?>
             </div>

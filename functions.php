@@ -309,7 +309,11 @@ function find_user_by_friend_code($conn, $friend_code) {
  */
 function get_notes_for_user($conn, $user_id) {
     $notes = [];
-    $sql = "SELECT id, title, content, todolist_content, updated_at FROM notes WHERE user_id = ? ORDER BY updated_at DESC";
+    $sql = "SELECT n.id, n.title, n.content, n.todolist_content, n.updated_at, n.transaction_id, t.description as transaction_description
+            FROM notes n
+            LEFT JOIN transactions t ON n.transaction_id = t.id AND t.user_id = n.user_id
+            WHERE n.user_id = ?
+            ORDER BY n.updated_at DESC";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param('i', $user_id);
     $stmt->execute();

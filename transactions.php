@@ -135,6 +135,9 @@ $current_page = 'transactions';
                                     </td>
                                     <td class="p-4">
                                         <div class="flex justify-center items-center space-x-2 action-buttons">
+                                            <button onclick="openNoteModal(<?php echo $tx['id']; ?>)" title="Aggiungi/Modifica Nota" class="p-2 hover:bg-gray-700 rounded-full transition-colors">
+                                                <svg class="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                            </button>
                                             <?php if (!empty($tx['invoice_path'])): ?>
                                                 <a href="<?php echo htmlspecialchars($tx['invoice_path']); ?>" target="_blank" title="Visualizza allegato" class="p-2 hover:bg-gray-700 rounded-full transition-colors invoice-link">
                                                     <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
@@ -579,6 +582,74 @@ $current_page = 'transactions';
                 `;
             }
         }
+    </script>
+
+    <!-- Modale per Note Transazione -->
+    <div id="note-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden">
+        <div class="fixed inset-0 bg-black bg-opacity-50 modal-backdrop" onclick="closeModal('note-modal')"></div>
+        <div class="bg-gray-800 rounded-2xl shadow-xl w-full max-w-lg p-6 modal-content">
+            <h2 class="text-2xl font-bold text-white mb-4">Nota della Transazione</h2>
+            <form id="note-form">
+                <input type="hidden" id="note-transaction-id" name="transaction_id">
+                <textarea id="note-content" name="note_content" rows="6" class="w-full bg-gray-700 text-white rounded-lg px-3 py-2" placeholder="Scrivi qui la tua nota..."></textarea>
+                <div class="mt-6 flex justify-end space-x-4">
+                    <button type="button" onclick="closeModal('note-modal')" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-5 rounded-lg">Annulla</button>
+                    <button type="submit" class="bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-2 px-5 rounded-lg">Salva Nota</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openNoteModal(transactionId) {
+            document.getElementById('note-transaction-id').value = transactionId;
+            const noteContentTextarea = document.getElementById('note-content');
+            noteContentTextarea.value = 'Caricamento...';
+
+            fetch(`ajax_note_handler.php?action=get_note&transaction_id=${transactionId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        noteContentTextarea.value = data.content;
+                    } else {
+                        noteContentTextarea.value = '';
+                        showToast(data.message || 'Impossibile caricare la nota.', 'error');
+                    }
+                })
+                .catch(() => {
+                    noteContentTextarea.value = '';
+                    showToast('Errore di rete nel caricare la nota.', 'error');
+                });
+
+            openModal('note-modal');
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const noteForm = document.getElementById('note-form');
+            if (noteForm) {
+                noteForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const transactionId = document.getElementById('note-transaction-id').value;
+                    const noteContent = document.getElementById('note-content').value;
+                    const formData = new FormData();
+                    formData.append('action', 'save_note');
+                    formData.append('transaction_id', transactionId);
+                    formData.append('note_content', noteContent);
+
+                    fetch('ajax_note_handler.php', { method: 'POST', body: formData })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                showToast(data.message || 'Nota salvata.');
+                                closeModal('note-modal');
+                            } else {
+                                showToast(data.message || 'Errore.', 'error');
+                            }
+                        })
+                        .catch(() => showToast('Errore di rete.', 'error'));
+                });
+            }
+        });
     </script>
 </body>
 </html>
